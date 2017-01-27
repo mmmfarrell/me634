@@ -1,0 +1,12 @@
+function [ quaternion ] = euler_to_quat( rpy )
+% takes in roll, pitch and yaw and convers to quaternions
+roll = rpy(1)
+pitch = rpy(2)
+yaw = rpy(3)
+
+
+quater
+
+
+end
+
