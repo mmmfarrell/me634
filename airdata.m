@@ -11,13 +11,19 @@ function out=airdata(uu)
     u           = uu(4);             % body velocity along x-axis (meters/s)
     v           = uu(5);             % body velocity along y-axis (meters/s)
     w           = uu(6);             % body velocity along z-axis (meters/s)
-    phi         = 180/pi*uu(7);      % roll angle (degrees)   
-    theta       = 180/pi*uu(8);      % pitch angle (degrees)
-    psi         = 180/pi*uu(9);      % yaw angle (degrees)
-    p           = 180/pi*uu(10);     % body angular rate along x-axis (degrees/s)
-    q           = 180/pi*uu(11);     % body angular rate along y-axis (degrees/s)
-    r           = 180/pi*uu(12);     % body angular rate along z-axis (degrees/s)
+    e0          = uu(7);      % roll angle (degrees)   
+    e1          = uu(8);      % pitch angle (degrees)
+    e2          = uu(9);      % yaw angle (degrees)
+    e3          = uu(10);
+    p           = 180/pi*uu(11);     % body angular rate along x-axis (degrees/s)
+    q           = 180/pi*uu(12);     % body angular rate along y-axis (degrees/s)
+    r           = 180/pi*uu(13);     % body angular rate along z-axis (degrees/s)
 
+    rpy = quat_to_euler([e0; e1; e2; e3]);
+    phi = rpy(1);
+    theta = rpy(2);
+    psi = rpy(3);
+    
     Va = sqrt(u^2+v^2+w^2);
     alpha = atan2(w,u);
     beta  = asin(v);

@@ -8,14 +8,21 @@ function drawVehicle(uu,V,F,patchcolors)
     u        = uu(4);       
     v        = uu(5);       
     w        = uu(6);       
-    phi      = uu(7);       % roll angle         
-    theta    = uu(8);       % pitch angle     
-    psi      = uu(9);       % yaw angle     
-    p        = uu(10);       % roll rate
-    q        = uu(11);       % pitch rate     
-    r        = uu(12);       % yaw rate    
-    t        = uu(13);       % time
+    e0       = uu(7);              
+    e1       = uu(8);          
+    e2       = uu(9); 
+    e3       = uu(10);
+    p        = uu(11);       % roll rate
+    q        = uu(12);       % pitch rate     
+    r        = uu(13);       % yaw rate    
+    t        = uu(14);       % time
 
+    % Convert quaternions to rpy
+    rpy     = quat_to_euler([e0; e1; e2; e3]);
+    phi     = rpy(1);
+    theta   = rpy(2);
+    psi     = rpy(3);
+    
     % define persistent variables 
     persistent vehicle_handle;
     persistent Vertices
