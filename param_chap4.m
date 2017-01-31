@@ -1,11 +1,15 @@
+%%%%%%%
+% Param file to be run at start of simulink
+%%%%
+
+
+% Airframe Params from file
+run aerosonde.m
+
 P.gravity = 9.8;
    
-%physical parameters of airframe Zagi
-P.mass = 1.56; % kg
-P.Jx   = 0.1147; % kg m^2
-P.Jy   = 0.0576; % kg m^2
-P.Jz   = 0.1712; % kg m^2
-P.Jxz  = 0.0015; % kg m^2
+% Lambda = adjustable gain for quaternions
+P.lambda = 100;
 
 % initial conditions
 P.pn0    = 0;  % initial North position
@@ -20,4 +24,21 @@ P.psi0   = 0;  % initial yaw angle
 P.p0     = 0;  % initial body frame roll rate
 P.q0     = 0;  % initial body frame pitch rate
 P.r0     = 0;  % initial body frame yaw rate
+
+%
+P.Va0 = 25;
+P.Ts = 0.01;
+
+% Wind
+P.wind_n    = 5;
+P.wind_e    = 5;
+P.wind_d    = 5;
+
+% Gusts
+P.sigma_u = 0.02;
+P.sigma_v = 0.02;
+P.sigma_w = 0.02;
+P.L_u = 1;
+P.L_v = 1;
+P.L_w = 1;
 

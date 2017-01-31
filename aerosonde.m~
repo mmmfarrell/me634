@@ -72,12 +72,3 @@ P.C_p_p = P.gamma3*P.C_ell_p + P.gamma4*P.C_n_p;
 P.C_p_r = P.gamma3*P.C_ell_r + P.gamma4*P.C_n_p;
 P.C_p_delta_a = P.gamma3*P.C_ell_delta_a + P.gamma4*P.C_n_delta_a;
 P.C_p_delta_r = P.gamma3*P.C_ell_delta_r + P.gamma4*P.C_n_delta_r;
-
-P.C_r_0 = P.gamma4*P.C_ell_0 + P.gamma8*P.C_n_0;
-P.C_r_beta = P.gamma4*P.C_ell_beta + P.gamma8*P.C_n_beta;
-P.C_r_p = P.gamma4*P.C_ell_p + P.gamma8*P.C_n_p;
-P.C_r_r = P.gamma4*P.C_ell_r + P.gamma8*P.C_n_r;
-P.C_r_delta_a = P.gamma4*P.C_ell_delta_a + P.gamma8*P.C_n_delta_a;
-P.C_r_delta_r = P.gamma4*P.C_ell_delta_r + P.gamma8*P.C_n_delta_r;
-
-P.AR = (P.b^2)/P.S_wing;

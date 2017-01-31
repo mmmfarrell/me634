@@ -66,9 +66,9 @@ function [sys,x0,str,ts,simStateCompliance]=mdlInitializeSizes(P)
 %
 sizes = simsizes;
 
-sizes.NumContStates  = 13;
+sizes.NumContStates  = 12;
 sizes.NumDiscStates  = 0;
-sizes.NumOutputs     = 13;
+sizes.NumOutputs     = 12;
 sizes.NumInputs      = 6;
 sizes.DirFeedthrough = 0;
 sizes.NumSampleTimes = 1;   % at least one sample time is needed
@@ -161,16 +161,16 @@ function sys=mdlDerivatives(t,x,uu, P)
     pndot = (e1^2 + e0^2 - e2^2 - e3^2)*u + 2*(e1*e2 - e3*e0)*v + 2*(e1*e3 + e2*e0)*w;
     pedot = 2*(e1*e2 + e3*e0)*u + (e2^2 + e0^2 - e1^2 - e3^2)*v + 2*(e2*e3 - e1*e0)*w;
     pddot = 2*(e1*e3 - e2*e0)*u + 2*(e2*e3 + e1*e0)*v + (e3^2 + e0^2 - e1^2 - e2^2)*w;
-    udot = r*v - q*w + fx/P.mass;
-    vdot = p*w - r*u + fy/P.mass;
-    wdot = q*u - p*v + fz/P.mass;
+    udot = r*v - q*w + fx/P.mas;
+    vdot = p*w - r*u + fy;
+    wdot = q*u - p*v + fz;
     e0dot = quat_der(1);
     e1dot = quat_der(2);
     e2dot = quat_der(3);
     e3dot = quat_der(4);
-    pdot = P.gamma1*p*q - P.gamma2*q*r + P.gamma3*ell+P.gamma4*n;
-    qdot = P.gamma5*p*r - P.gamma6*(p^2 - r^2) + m/P.Jy;
-    rdot = P.gamma7*p*q - P.gamma1*q*r + P.gamma4*ell + P.gamma8*n;
+    pdot = P.gamma1*p*q - P.gamma2*q*r + ell;
+    qdot = comp4(2);
+    rdot = comp4(3);
 
 sys = [pndot; pedot; pddot; udot; vdot; wdot; e0dot; e1dot; e2dot; e3dot; pdot; qdot; rdot];
 

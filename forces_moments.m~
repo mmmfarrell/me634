@@ -38,8 +38,8 @@ function out = forces_moments(x, delta, wind, P)
     w_wg    = wind(6); % gust along body z-axis
     
     % compute wind data in NED
-    rotm_I_to_B = quat_to_rotm([e0; e1; e2; e3]);
-    wind_inert = [w_ns; w_es; w_ds] + rotm_I_to_B'*[u_wg; v_wg; w_wg];
+    rotm_I_to_B = quat_to__rotm([e0 e1 e2 e3]);
+    wind_inert = [w_ns w_es w_ds] + rotm_I_to_B'*[u_wg v_wg w_wg];
     w_n = wind_inert(1);
     w_e = wind_inert(2);
     w_d = wind_inert(3);
