@@ -34,11 +34,12 @@ P.wind_n    = 5;
 P.wind_e    = 5;
 P.wind_d    = 5;
 
-% Gusts
-P.sigma_u = 0.02;
-P.sigma_v = 0.02;
-P.sigma_w = 0.02;
-P.L_u = 1;
-P.L_v = 1;
-P.L_w = 1;
+% Dryden Gust Model Parameters
+% Low alt, light turb
+P.sigma_u = 1.06;
+P.sigma_v = 1.06;
+P.sigma_w = 0.7;
+P.L_u = 200;
+P.L_v = 200;
+P.L_w = 50;
 

@@ -41,7 +41,8 @@ function drawVehicle(uu,V,F,patchcolors)
         ylabel('North')
         zlabel('-Down')
         view(32,47)  % set the view angle for figure
-        axis([-10,10,-10,10,-10,10]);
+        plot_size = 500;
+        axis([-plot_size,plot_size,-plot_size,plot_size,-plot_size,plot_size]);
         hold on
         
     % at every other time step, redraw base and rod
@@ -140,10 +141,10 @@ wing_w = 3;
 tailwing_l = 0.5;
 tailwing_w = 2;
 tail_h = 0.75;
-
+scale_factor = 10;
 
 % Define the vertices (physical location of vertices
-V = [...
+V = scale_factor*[...
     fuse_l1, 0, 0;...   % pt 1
     fuse_l2, fuse_w/2, -fuse_h/2;... % pt 2
     fuse_l2, -fuse_w/2, -fuse_h/2;...   % pt 3
