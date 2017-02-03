@@ -41,7 +41,7 @@ function drawVehicle(uu,V,F,patchcolors)
         ylabel('North')
         zlabel('-Down')
         view(32,47)  % set the view angle for figure
-        plot_size = 500;
+        plot_size = 1000;
         axis([-plot_size,plot_size,-plot_size,plot_size,-plot_size,plot_size]);
         hold on
         
@@ -141,7 +141,7 @@ wing_w = 3;
 tailwing_l = 0.5;
 tailwing_w = 2;
 tail_h = 0.75;
-scale_factor = 10;
+scale_factor = 100;
 
 % Define the vertices (physical location of vertices
 V = scale_factor*[...

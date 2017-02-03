@@ -30,7 +30,7 @@ P.Va0 = 25;
 P.Ts = 0.01;
 
 % Wind
-P.wind_n    = 0;
+P.wind_n    = -20;
 P.wind_e    = 0;
 P.wind_d    = 0;
 
