@@ -12,7 +12,7 @@ P.gravity = 9.8;
 P.lambda = 100;
 
 % initial conditions
-P.pn0    = -400;  % initial North position
+P.pn0    = 0;  % initial North position
 P.pe0    = 0; % initial East position
 P.pd0    = 0;  % initial Down position (negative altitude)
 P.u0     = 25;  % initial velocity along body x-axis

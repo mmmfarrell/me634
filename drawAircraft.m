@@ -40,8 +40,9 @@ function drawVehicle(uu,V,F,patchcolors)
         xlabel('East')
         ylabel('North')
         zlabel('-Down')
+        grid on
         view(32,47)  % set the view angle for figure
-        plot_size = 1000;
+        plot_size = 100;
         axis([-plot_size,plot_size,-plot_size,plot_size,-plot_size,plot_size]);
         hold on
         
@@ -82,6 +83,9 @@ function handle = drawVehicleBody(V,F,patchcolors,...
                  'EraseMode', mode);
   else
     set(handle,'Vertices',V','Faces',F);
+    xlim(handle.Parent,[pe-100, pe+100]);
+    ylim(handle.Parent,[pn-100, pn+100]);
+    zlim(handle.Parent,[-(pd+100), -(pd-100)]);
     drawnow
   end
 end
@@ -141,7 +145,7 @@ wing_w = 3;
 tailwing_l = 0.5;
 tailwing_w = 2;
 tail_h = 0.75;
-scale_factor = 100;
+scale_factor = 10;
 
 % Define the vertices (physical location of vertices
 V = scale_factor*[...
