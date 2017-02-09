@@ -6,17 +6,16 @@ function [T_phi_delta_a,T_chi_phi,T_theta_delta_e,T_h_theta,T_h_Va,T_Va_delta_t,
 a_phi1 = -0.5*P.rho*P.Va0^2*P.S_wing*P.b*P.C_p_p*P.b/(2*P.Va0);
 a_phi2 = 0.5*P.rho*P.Va0^2*P.S_wing*P.b*P.C_p_delta_a;
 
-Va_trim = 
-    
+Va_trim = sqrt(P.u0^2 + P.v0^2 + P.w0^2);
 a_theta1 = -(P.rho*P.Va0^2 * P.c*P.S_wing*P.C_m_q*P.c)/(2*P.Jy*2*P.Va0);
 a_theta2 = -(P.rho*P.Va0^2 * P.c*P.S_wing*P.C_m_alpha)/(2*P.Jy);
 a_theta3 = (P.rho*P.Va0^2 * P.c*P.S_wing*P.C_m_delta_e)/(2*P.Jy);
 
-theta_trim =
-
-a_V1 =
-a_V2 = (P.rho*P.S_prop*P.C_prop*P.k_motor^2*delta_t_trim)/P.mass; % K MOTOR?? delta_t_trim??
-a_V3 = P.gravity;
+theta_trim = P.theta0;
+alpha_trim = atan(P.w0/P.u0);
+a_V1 = (P.rho*Va_trim*P.S_wing*(P.C_D_0+P.C_D_alpha*alpha_trim+P.C_D_delta_e*utrim(1)))/P.mass + (P.rho*P.S_prop*P.C_prop*Va_trim/P.mass);
+a_V2 = (P.rho*P.S_prop*P.C_prop*P.k_motor^2*u_trim(4))/P.mass;
+a_V3 = P.gravity*cos(theta_trim - alpha_trim);
 
 a_beta1 = -(P.rho*P.Va0*P.S_wing*P.C_Y_beta)/(2*P.mass);
 a_beta2 = (P.rho*P.Va0*P.S_wing*P.C_Y_delta_r)/(2*P.mass);

@@ -4,15 +4,17 @@ function [x_trim,u_trim] = compute_trim(filename, Va, gamma, R)
 % R is the desired radius (m) - use (+) for right handed orbit, 
 %                                   (-) for left handed orbit
 
+if(R~=0)
+    psidot = Va/R;
+    quatdot = euler_to_quat([0; 0; psidot]);
+else
+    quatdot = euler_to_quat([0; 0; 0]);
+end
 
-psidot = Va/R;
-quatdot = euler_to_quat([0; 0; psidot]);
+quatinit = euler_to_quat([0; gamma; 0]);
 
-thetainit = gamma;
-quatinit = euler_to_quat([0; thetainit; 0]);
-
-dx0 = [0; 0; Va*sin(gamma); 0; 0; 0; quatdot(1); quatdot(2);
-quatdot(3); quatdot(4); 0; 0; 0];
+dx0 = [0; 0; -Va*sin(gamma); 0; 0; 0; quatdot(1); quatdot(2);...
+    quatdot(3); quatdot(4); 0; 0; 0];
 idx = [3; 4; 5; 6; 7; 8; 9; 10; 11; 12; 13];
 
 x0 = [0; 0; Va; 0; 0; 0; quatinit(1); quatinit(2); quatinit(3); quatinit(4); 0; 0; 0];
