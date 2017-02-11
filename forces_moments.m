@@ -87,7 +87,7 @@ function out = forces_moments(x, delta, wind, P)
     Torque(2) = 0.5*P.rho*Va^2*P.S_wing*P.c*(P.C_m_0 + P.C_m_alpha*alpha + (P.C_m_q*P.c*q/(2*Va)) + P.C_m_delta_e*delta_e);   
     Torque(3) = 0.5*P.rho*Va^2*P.S_wing*P.b*(P.C_n_0 + P.C_n_beta*beta + (P.C_n_p*P.b*p/(2*Va)) + (P.C_n_r*P.b*r/(2*Va)) + P.C_n_delta_a*delta_a + P.C_n_delta_r*delta_r);
    
-    out = [Force'; Torque'; Va; alpha; beta; w_n; w_e; w_d]
+    out = [Force'; Torque'; Va; alpha; beta; w_n; w_e; w_d];
 end
 
 

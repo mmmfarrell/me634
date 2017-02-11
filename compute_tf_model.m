@@ -13,7 +13,7 @@ a_theta3 = (P.rho*P.Va0^2 * P.c*P.S_wing*P.C_m_delta_e)/(2*P.Jy);
 
 theta_trim = P.theta0;
 alpha_trim = atan(P.w0/P.u0);
-a_V1 = (P.rho*Va_trim*P.S_wing*(P.C_D_0+P.C_D_alpha*alpha_trim+P.C_D_delta_e*utrim(1)))/P.mass + (P.rho*P.S_prop*P.C_prop*Va_trim/P.mass);
+a_V1 = (P.rho*Va_trim*P.S_wing*(P.C_D_0+P.C_D_alpha*alpha_trim+P.C_D_delta_e*u_trim(1)))/P.mass + (P.rho*P.S_prop*P.C_prop*Va_trim/P.mass);
 a_V2 = (P.rho*P.S_prop*P.C_prop*P.k_motor^2*u_trim(4))/P.mass;
 a_V3 = P.gravity*cos(theta_trim - alpha_trim);
 
