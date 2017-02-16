@@ -80,7 +80,7 @@ function out = forces_moments(x, delta, wind, P)
     Force(1) =  P.mass*P.gravity*2*(e1*e3 - e2*e0) + 0.5*P.rho*Va^2*P.S_wing*(C_X_alpha + C_X_q_alpha*P.c*q/(2*Va) + C_X_delta_e_alpha*delta_e)...
         +0.5*P.rho*P.S_prop*P.C_prop*((P.k_motor*delta_t)^2-Va^2);
     Force(2) =  P.mass*P.gravity*2*(e2*e3 + e1*e0) + 0.5*P.rho*Va^2*P.S_wing*(P.C_Y_0 + P.C_Y_beta*beta + P.C_Y_p*P.b*p/(2*Va) + P.C_Y_r*P.b*r/(2*Va) + P.C_Y_delta_a*delta_a + P.C_Y_delta_r*delta_r);
-    Force(3) =  P.mass*P.gravity*(e3^2 + e0^2 - e1^2 - e2^2) + 0.5*P.rho*Va^2*P.S_wing*(C_Z_alpha + C_Z_q_alpha*P.c*w/(2*Va) + C_Z_delta_e_alpha*delta_e);
+    Force(3) =  P.mass*P.gravity*(e3^2 + e0^2 - e1^2 - e2^2) + 0.5*P.rho*Va^2*P.S_wing*(C_Z_alpha + C_Z_q_alpha*P.c*q/(2*Va) + C_Z_delta_e_alpha*delta_e);
     
     Torque(1) = 0.5*P.rho*Va^2*P.S_wing*P.b*(P.C_ell_0 + P.C_ell_beta*beta + (P.C_ell_p*P.b*p/(2*Va)) + (P.C_ell_r*P.b*r/(2*Va)) + P.C_ell_delta_a*delta_a + P.C_ell_delta_r*delta_r)...
         - P.k_T_P*(P.k_Omega*delta_t)^2;
