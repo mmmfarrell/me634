@@ -105,8 +105,12 @@ P.Va0 = 35;
 gamma = 0*pi/180;  % desired flight path angle (radians)
 R     = Inf;         % desired radius (m) - use (+) for right handed orbit, 
 P.lambda = 100;
+
 % autopilot sample rate
 P.Ts = 0.01;
+
+% Dirty Derivative gain
+P.tau = 0.05;
 
 % first cut at initial conditions
 P.pn0    = 0;  % initial North position

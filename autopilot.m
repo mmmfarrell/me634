@@ -36,7 +36,7 @@ function y = autopilot(uu,P)
     NN = NN+3;
     t        = uu(1+NN);   % time
     
-    autopilot_version = 1;
+    autopilot_version = 3;
         % autopilot_version == 1 <- used for tuning
         % autopilot_version == 2 <- standard autopilot defined in book
         % autopilot_version == 3 <- Total Energy Control for longitudinal AP
@@ -46,7 +46,7 @@ function y = autopilot(uu,P)
         case 2,
            [delta, x_command] = autopilot_uavbook(Va_c,h_c,chi_c,Va,h,chi,phi,theta,p,q,r,t,P);
         case 3,
-               [delta, x_command] = autopilot_TECS(Va_c,h_c,chi_c,Va,h,chi,phi,theta,p,q,r,t,P);
+           [delta, x_command] = autopilot_TECS(Va_c,h_c,chi_c,Va,h,chi,phi,theta,p,q,r,t,P);
     end
     y = [delta; x_command];
 end
@@ -179,26 +179,6 @@ function [delta, x_command] = autopilot_uavbook(Va_c,h_c,chi_c,Va,h,chi,phi,thet
     
     % define persistent variable for state of altitude state machine
     persistent altitude_state;% select gains for roll loop
-    % get transfer function data for delta_a to phi
-    [num,den]=tfdata(T_phi_delta_a,'v');
-    a_phi2 = num(3);
-    a_phi1 = den(2);
-    % maximum possible aileron command
-    delta_a_max = 45*pi/180;
-    % Roll command when delta_a_max is achieved
-    phi_max = 30*pi/180;
-    % pick natural frequency to achieve delta_a_max for step of phi_max
-    zeta_roll = 0.7;
-    %wn_roll = sqrt(a_phi2*delta_a_max/phi_max);
-    wn_roll = sqrt(a_phi2*delta_a_max*sqrt(1-zeta_roll^2)/phi_max);
-    
-    % set control gains based on zeta and wn
-    P.roll_kp = wn_roll^2/a_phi2;
-    P.roll_kd = 1.1*(2*zeta_roll*wn_roll - a_phi1)/a_phi2;
-    P.roll_ki = 0.1;
-    
-    % add extra roll damping
-    P.roll_kd = P.roll_kd;
     persistent initialize_integrator;
     % initialize persistent variable
     if t==0,
@@ -278,11 +258,34 @@ function [delta, x_command] = autopilot_TECS(Va_c,h_c,chi_c,Va,h,chi,phi,theta,p
     
     %----------------------------------------------------------
     % longitudinal autopilot based on total energy control
+    Ek = 0.5*P.mass*Va^2;
+    Ek_tilde = 0.5*P.mass*(Va_c^2-Va^2);
     
+    Ep = P.mass*P.gravity*h;
+    Ep_tilde = P.mass*P.gravity*(h_c-h);
     
-    delta_e = 0;
-    delta_t = 0;
- 
+    Et = Ep + Ek;
+    Et_tilde = Ep_tilde + Ek_tilde
+    
+    Ed = Ep - Ek;
+    Ed_tilde = Ep_tilde - Ek_tilde
+    
+    if t==0
+        delta_t = TECS_T(Et_tilde, 1, P);
+        theta_c = TECS_theta(Ed_tilde, 1, P);
+    else
+        delta_t = TECS_T(Et_tilde, 0, P);
+        theta_c = TECS_theta(Ed_tilde, 0, P);
+    end
+    
+%     theta_c = 10*pi/180;
+    delta_e = pitch_hold(theta_c, theta, q, P);
+%     theta_c = h_c;
+
+    % Test Pitch hold
+%     delta_t = P.u_trim(4);
+%     delta_e = P.u_trim(1);
+%     delta_e = pitch_hold(theta_c, theta, q, P);
     
     %----------------------------------------------------------
     % create outputs
@@ -381,6 +384,136 @@ function delta_a = roll_hold(phi_c, phi, p, P)
     
 end
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Pitch Attitude Controller
+% delta_e from theta_c
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function delta_e = pitch_hold(theta_c, theta, q, P)
+    % Pg. 107
+    % PD Control
+    
+    % Current Error
+    error = theta_c - theta;
+%     disp(error)
+    
+    % Proportional
+    up = P.pitch_kp*error;
+    
+    % Derivative
+    ud = P.pitch_kd * q;
+    
+    % PD Control
+    delta_e = sat(up+ud, 45*pi/180, -45*pi/180);
+    
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TECS Throttle
+% delta_t from energy
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function delta_t = TECS_T(Et_tilde, init, P)
+    % Slides
+    % PID Control
+    % kp on Et_tilde + ki on Et_tilde + kd on Et_tilde
+    persistent integrator;
+    persistent differentiator;
+    persistent error_d1;
+    
+    if init
+        integrator = 0;
+        error_d1 = 0;
+        differentiator = 0;
+    end
+    
+    % Current Error
+    error = Et_tilde;
+    
+    % Integrator
+    integrator = integrator + (P.Ts/2)*(error+error_d1);
+    
+    % Differentiator
+    differentiator = (2*P.tau-P.Ts)/(2*P.tau+P.Ts)*differentiator +...
+        2/(2*P.tau+P.Ts)*(error - error_d1);
+    
+    % Proportional
+    up = P.TECS_T_kp*error;
+    
+    % Derivative
+    ud = P.TECS_T_kd*differentiator;
+    
+    % Integral
+    ui = P.TECS_T_ki * integrator;
+    
+    % PID Control
+    disp('delta_t_unsat')
+    delta_t_unsat = up + ud + ui
+    delta_t = sat(delta_t_unsat, 1, 0);
+    
+    % Anti-windup
+    if P.TECS_T_ki ~= 0
+        integrator = integrator + (P.Ts/P.TECS_T_ki)*(delta_t - delta_t_unsat);
+    end
+    
+    % Update error
+    error_d1 = error;
+    
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TECS Theta
+% theta_c from energy diff
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function theta_c = TECS_theta(Ed_tilde, init, P)
+    % Slides
+    % PID Control
+    % kp on Ed_tilde + ki on Ed_tilde + kd on Ed_tilde
+    persistent integrator;
+    persistent differentiator;
+    persistent error_d1;
+    
+    if init
+        integrator = 0;
+        error_d1 = 0;
+        differentiator = 0;
+    end
+    
+    % Current Error
+    error = Ed_tilde;
+    
+    % Integrator
+    integrator = integrator + (P.Ts/2)*(error+error_d1);
+    
+    % Differentiator
+    differentiator = (2*P.tau-P.Ts)/(2*P.tau+P.Ts)*differentiator +...
+        2/(2*P.tau+P.Ts)*(error - error_d1);
+    
+    % Proportional
+    up = P.TECS_theta_kp*error;
+    
+    % Derivative
+    ud = P.TECS_theta_kd*differentiator;
+    
+    % Integral
+    ui = P.TECS_theta_ki * integrator;
+    
+    % PID Control
+    disp('theta_c_unsat')
+    theta_c_unsat = up + ud + ui
+    theta_c = sat(theta_c_unsat, 45*pi/180, -45*pi/180);
+    
+    % Anti-windup
+    if P.TECS_theta_ki ~= 0
+        integrator = integrator + (P.Ts/P.TECS_theta_ki)*(theta_c - theta_c_unsat);
+    end
+    
+    % Update error
+    error_d1 = error;
+    
+end
 
   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

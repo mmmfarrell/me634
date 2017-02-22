@@ -44,3 +44,41 @@ wn_chi = (1/Wx)*wn_phi;
 P.course_kp = 2*zeta_chi*wn_chi/gVa;
 P.course_ki = (wn_chi^2)/gVa;
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%
+% Pitch command Hold
+%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%% Tuning Params %%%%%
+theta_step_max = 30*pi/180;
+pitch_zeta = 0.7;
+theta_max = 30*pi/180;
+
+% TF delta_e to theta
+[num,den]=tfdata(T_theta_delta_e,'v');
+a_theta1 = den(2);
+a_theta2 = den(3);
+a_theta3 = num(3);
+
+P.pitch_kp = ((theta_max)/(theta_step_max))*sign(a_theta3);
+
+wn_theta = sqrt(a_theta2 + P.pitch_kp*a_theta3);
+
+P.pitch_kd = -(2*pitch_zeta*wn_theta - a_theta1)/a_theta3;
+
+P.pitch_DC = (P.pitch_kp*a_theta3)/(a_theta2 + P.pitch_kp*a_theta3);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% TECS Gains %%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%% Theta Command from Energy Diff %%%%%
+P.TECS_theta_kp = 0.00001;
+P.TECS_theta_kd = -0.00001;
+P.TECS_theta_ki = 0;
+
+%%%% Throttle from Total Energy %%%%%
+P.TECS_T_kp = 0.00001;
+P.TECS_T_kd = -0.00001;
+P.TECS_T_ki = 0;
