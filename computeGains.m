@@ -74,11 +74,11 @@ P.pitch_DC = (P.pitch_kp*a_theta3)/(a_theta2 + P.pitch_kp*a_theta3);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%% Theta Command from Energy Diff %%%%%
-P.TECS_theta_kp = 0.00001;
-P.TECS_theta_kd = -0.00001;
-P.TECS_theta_ki = 0;
+P.TECS_theta_kp = 1;
+P.TECS_theta_kd = 0.75;
+P.TECS_theta_ki = 0.5;
 
 %%%% Throttle from Total Energy %%%%%
-P.TECS_T_kp = 0.00001;
-P.TECS_T_kd = -0.00001;
-P.TECS_T_ki = 0;
+P.TECS_T_kp = 1;
+P.TECS_T_kd = 0.75;
+P.TECS_T_ki = 0.5;

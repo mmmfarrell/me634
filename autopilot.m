@@ -258,6 +258,9 @@ function [delta, x_command] = autopilot_TECS(Va_c,h_c,chi_c,Va,h,chi,phi,theta,p
     
     %----------------------------------------------------------
     % longitudinal autopilot based on total energy control
+    % nominal kinetic energy to normalize
+    Ek_nom = 0.5*P.mass*P.Va0^2;
+    
     Ek = 0.5*P.mass*Va^2;
     Ek_tilde = 0.5*P.mass*(Va_c^2-Va^2);
     
@@ -265,10 +268,10 @@ function [delta, x_command] = autopilot_TECS(Va_c,h_c,chi_c,Va,h,chi,phi,theta,p
     Ep_tilde = P.mass*P.gravity*(h_c-h);
     
     Et = Ep + Ek;
-    Et_tilde = Ep_tilde + Ek_tilde
+    Et_tilde = (Ep_tilde + Ek_tilde)/Ek_nom;
     
     Ed = Ep - Ek;
-    Ed_tilde = Ep_tilde - Ek_tilde
+    Ed_tilde = (Ep_tilde - Ek_tilde)/Ek_nom;
     
     if t==0
         delta_t = TECS_T(Et_tilde, 1, P);
@@ -448,8 +451,8 @@ function delta_t = TECS_T(Et_tilde, init, P)
     ui = P.TECS_T_ki * integrator;
     
     % PID Control
-    disp('delta_t_unsat')
-    delta_t_unsat = up + ud + ui
+    %disp('delta_t_unsat')
+    delta_t_unsat = up + ud + ui;
     delta_t = sat(delta_t_unsat, 1, 0);
     
     % Anti-windup
@@ -501,8 +504,8 @@ function theta_c = TECS_theta(Ed_tilde, init, P)
     ui = P.TECS_theta_ki * integrator;
     
     % PID Control
-    disp('theta_c_unsat')
-    theta_c_unsat = up + ud + ui
+    %disp('theta_c_unsat')
+    theta_c_unsat = up + ud + ui;
     theta_c = sat(theta_c_unsat, 45*pi/180, -45*pi/180);
     
     % Anti-windup
