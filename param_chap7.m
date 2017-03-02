@@ -8,6 +8,7 @@ P.Jx   = 0.8244;
 P.Jy   = 1.135;
 P.Jz   = 1.759;
 P.Jxz  = .1204;
+
 % aerodynamic coefficients
 P.S_wing        = 0.55;
 P.b             = 2.8956;
@@ -157,3 +158,33 @@ P.r0     = x_trim(12);  % initial body frame yaw rate
 
 computeGains;
 
+%%%%%%%%%%%%%%%
+%%% Sensors %%%
+%%%%%%%%%%%%%%%
+P.sigma_gyro = 0.13 * pi/180.0; % rad/s Appendix H.1 for ADXRS540
+
+P.sigma_accel = 0.0025*P.gravity; % m/s/s Appendix H.2 for ADXL325
+
+P.sigma_abs_press = 0.01*1000; % Pa Appendix H.3
+P.beta_abs_press = 0.125*1000; % Pa Appendix H.3
+
+P.sigma_diff_press = 0.002 * 1000; % Pa Appendix H.3
+P.beta_diff_press = 0.020*1000; % Pa Appendix H.3
+
+P.mag_inclination = 65.7 * pi/180; % rad Pg. 132
+P.mag_declination = 12.12 * pi/180; % rad Pg. 131
+
+% Init mag field in inertial frame
+mag_north = cos(P.mag_inclination)*cos(P.mag_declination);
+mag_east = cos(P.mag_inclination)*sin(P.mag_declination);
+mag_down = sin(P.mag_inclination);
+P.mag_inertia = [mag_north;mag_east;mag_down];
+
+%%% GPS %%% from Table 7.2 pg. 139
+P.Ts_gps = 1.0; % s
+P.gps_k = 1/1100; % 1/s
+P.gps_sigma_n = 0.21; % m
+P.gps_sigma_e = 0.21; % m
+P.gps_sigma_alt = 0.40; % m
+P.gps_sigma_Vg = 0.05; % m/s
+P.gps_sigma_x = P.gps_sigma_Vg/P.Va0;
