@@ -43,6 +43,8 @@ function xhat = estimate_states(uu, P)
    y_gps_course  = uu(13);
    t             = uu(14);
    
+   g = P.gravity;
+   
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
    %%%%%%%%%%% LPF  Section 8.3 %%%%%%%%%%%%%%%%%
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -95,6 +97,95 @@ function xhat = estimate_states(uu, P)
    thetahat = asin(lpf_accel_x/P.gravity);
    
    
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   %%%%%% EKF %%%%%%%%%%%%%%%%%%%%%%%%%%%
+   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+   
+   %%%%%%%%%%%%%%%%%%%%%%%
+   % Attitude Estimation %
+   %%%%%%%%%%%%%%%%%%%%%%%
+   
+   persistent xhat_a 
+   persistent y_accel_x_old
+   persistent P_a
+   
+   % Init persistent variables
+   if t ==0
+       xhat_a = [P.phi0; P.theta0];
+       P_a = [1, 0; 0, 1];
+   end
+   
+   % Matricies
+   R_accel = P.sigma_accel^2;
+   Q_a = [0.0000001, 0; 0, 0.0000001];
+   
+   %%%% Prediction %%%%
+   N = 10; % Prediction steps
+   for i=1:N
+       % States
+       phi = xhat_a(1);
+       theta = xhat_a(2);
+   
+       % Trigs
+       sp = sin(phi);
+       cp = cos(phi);
+       ct = cos(theta);
+       tt = tan(theta);
+   
+       f_a = [phat + qhat*sp*tt + rhat*cp*tt;...
+       qhat*cp - rhat*sp];
+   
+       df_a = [qhat*cp*tt-rhat*sp*tt, (qhat*sp-rhat*cp)/((ct)^2);...
+       -qhat*sp-rhat*cp, 0];
+   
+       G_a = [ 1, sp*tt, cp*tt; ...
+                0, cp, -sp];
+   
+       xhat_a = xhat_a + (P.Ts/N)*f_a;
+       A_a = df_a;
+       P_a = P_a + (P.Ts/N)*(A_a*P_a + P_a*A_a' + Q_a);
+   end
+   
+   %%%% Update %%%%
+   % Equations
+   sp = sin(phi);
+   cp = cos(phi);
+   ct = cos(theta);
+   st = sin(theta);
+       
+   h_a = [qhat*Vahat*st+g*st;...
+       rhat*Vahat*ct-phat*Vahat*st-g*ct*sp;...
+       -qhat*Vahat*ct-g*ct*cp];
+   
+   dh_a = [0, qhat*Vahat*ct+g*ct;...
+       -g*cp*ct, -rhat*Vahat*st-phat*Vahat*ct+g*sp*st;...
+       g*sp*ct, (qhat*Vahat+g*cp)*st];
+   
+   if (y_accel_x_old ~= y_accel_x)
+       % x-axis accel
+       h_i = h_a(1);
+       C_i = dh_a(1,:);
+       L_a = P_a*C_i'/(R_accel + C_i*P_a*C_i');
+       P_a = (eye(2) - L_a*C_i)*P_a;
+       xhat_a = xhat_a + L_a*(y_accel_x - h_i);
+       % y-axis accel
+       h_i = h_a(2);
+       C_i = dh_a(2,:);
+       L_a = P_a*C_i'/(R_accel + C_i*P_a*C_i');
+       P_a = (eye(2) - L_a*C_i)*P_a;
+       xhat_a = xhat_a + L_a*(y_accel_y - h_i);
+       % z-axis accel
+       h_i = h_a(3);
+       C_i = dh_a(3,:);
+       L_a = P_a*C_i'/(R_accel + C_i*P_a*C_i');
+       P_a = (eye(2) - L_a*C_i)*P_a;
+       xhat_a = xhat_a + L_a*(y_accel_z - h_i);
+   end
+   
+   % update estimates
+   phihat = xhat_a(1);
+   thetahat = xhat_a(2);
+       
     % not estimating these states 
     alphahat = 0;
     betahat  = 0;
@@ -102,26 +193,19 @@ function xhat = estimate_states(uu, P)
     byhat    = 0;
     bzhat    = 0;
     
-    %%%%%% Algorithm 2 EKF Pg. 156
-    % Init
-    % xhat = X0
-    
-    % Sample Rate < sample rate of sensors
-    
-    % At each sample Time Tout:
-    
-    % for i = 1 to N do {Prediction}
-    %   xhat = xhat + (Tout/N)*f(xhat,u)
-    %   A = (df/dx)(xhat,u)
-    %   P = P + (Tout/N)*(AP + PA^T + Q)
-    % end for
-    
-    % if Measurment received from sensor i then {Update}
-    %   Ci = (dhi/dx)(xhat,u[n])
-    %   Li = PCi^T(Ri+CiPCi^T)^-1
-    %   P = (I - LiCi)P
-    %   xhat = xhat + Li(yi[n] - h(xhat,u[n]))
-    % end if 
+    pnhat    = 0;  
+    pehat    = 0; 
+    hhat     = 0; 
+    Vahat     = 0;
+    chihat     = 0;
+    phat     = 0;
+    qhat     = 0;
+    rhat     = 0;
+    Vghat     = 0;
+    wnhat     = 0;
+    wehat     = 0;
+    psihat     = 0;
+     
     
       xhat = [...
         pnhat;...   

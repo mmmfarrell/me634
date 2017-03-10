@@ -162,6 +162,9 @@ computeGains;
 %%% Sensors %%%
 %%%%%%%%%%%%%%%
 P.sigma_gyro = 0.13 * pi/180.0; % rad/s Appendix H.1 for ADXRS540
+P.bias_gyro_x = 0;
+P.bias_gyro_y = 0;
+P.bias_gyro_z = 0;
 
 P.sigma_accel = 0.0025*P.gravity; % m/s/s Appendix H.2 for ADXL325
 
