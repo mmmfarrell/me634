@@ -112,7 +112,7 @@ function xhat = estimate_states(uu, P)
    % Init persistent variables
    if t ==0
        xhat_a = [P.phi0; P.theta0];
-       P_a = [1, 0; 0, 1];
+       P_a = diag([(15*pi/180)^2, (15*pi/180)^2]);
    end
    
    % Matricies
@@ -185,6 +185,158 @@ function xhat = estimate_states(uu, P)
    % update estimates
    phihat = xhat_a(1);
    thetahat = xhat_a(2);
+   
+   
+   %%%%%%%%%%%%%%%%%%%%%%%
+   % GPS Smoother %
+   %%%%%%%%%%%%%%%%%%%%%%%
+   
+   persistent xhat_p 
+   persistent P_p
+   persistent gps_n_old
+   persistent gps_e_old
+   persistent gps_Vg_old
+   persistent gps_x_old
+   
+   % Init persistent variables
+   if t ==0
+       xhat_p = [P.pn0; P.pe0; P.Va0; P.psi0; 0; 0; P.psi0];
+       P_p = diag([10^2, 10^2, 1^2, (10*pi/180)^2, 10^2, 10^2, (5*pi/180)^2]);
+       gps_n_old = -9999;
+       gps_e_old = -9999;
+       gps_Vg_old = -9999;
+       gps_x_old = -9999;
+   end
+   
+   % Matricies
+   Q_p = diag([0.0001, 0.0001, 0.0001, 0.000001, 0.0001, 0.0001, 0.0001]);
+   R_p = diag([P.gps_sigma_n^2, P.gps_sigma_e^2, P.gps_sigma_Vg^2, P.gps_sigma_x, 0.001, 0.001]);
+   
+   %%%% Prediction %%%%
+   N = 10; % Prediction steps
+   for i=1:N
+       % States
+       pn = xhat_p(1);
+       pe = xhat_p(2);
+       Vg = xhat_p(3);
+       chi = xhat_p(4);
+       wn = xhat_p(5);
+       we = xhat_p(6);
+       psi = xhat_p(7);
+   
+       % Trigs
+       sp = sin(phihat);
+       cp = cos(phihat);
+       tp = tan(phihat);
+       st = sin(thetahat);
+       ct = cos(thetahat);
+       tt = tan(thetahat);
+       cs = cos(psi);
+       ss = sin(psi);
+       ts = tan(psi);
+       cc = cos(chi);
+       sc = sin(chi);
+   
+       psidot = qhat*(sp/ct) + rhat*(cp/ct);
+       Vgdot = ((Vahat*cs+wn)*(-Vahat*psidot*ss)+(Vahat*ss+we)*(Vahat*psidot*cs))/(Vg);
+       
+       f_p = [Vg*cos(chi);...
+           Vg*sin(chi);...
+           Vgdot;...
+           (g/Vg)*tp*cos(chi-psi);...
+           0;...
+           0;...;
+           psidot];
+   
+       df_p = [...
+           0, 0, cc, -Vg*sc, 0, 0, 0;...
+           0, 0, sc, Vg*cc, 0, 0, 0;...
+           0, 0, -Vgdot/Vg, 0, -psidot*Vahat*ss, psidot*Vahat*cs, (-psidot*Vahat*(wn*cs + we*ss))/Vg;...
+           0, 0, (-g*tp*cos(chi-psi))/Vg^2, (-g*tp*sin(chi-psi))/Vg^2, 0, 0, (g*tp*sin(chi-psi))/Vg^2;...
+           0, 0, 0, 0, 0, 0, 0;...
+           0, 0, 0, 0, 0, 0, 0;...
+           0, 0, 0, 0, 0, 0, 0];
+   
+   
+       xhat_p = xhat_p + (P.Ts/N)*f_p;
+       A_p = df_p;
+       P_p = P_p + (P.Ts/N)*(A_p*P_p + P_p*A_p' + Q_p);
+   end
+   
+   %%%% Update %%%%
+   if (y_gps_n ~= gps_n_old) | (y_gps_e ~= gps_e_old) | (y_gps_Vg ~= gps_Vg_old) | (y_gps_course ~= gps_x_old),
+
+       % States
+       pn = xhat_p(1);
+       pe = xhat_p(2);
+       Vg = xhat_p(3);
+       chi = xhat_p(4);
+       wn = xhat_p(5);
+       we = xhat_p(6);
+       psi = xhat_p(7);
+       
+       % gps n
+       h_p = xhat_p(1);
+       C_p = [1, 0, 0, 0, 0, 0, 0];
+       L_p = P_p*C_p'/(R_p(1,1) + C_p*P_p*C_p');
+       P_p = (eye(7) - L_p*C_p)*P_p;
+       xhat_p = xhat_p + L_p*(y_gps_n - h_p);
+       
+       % gps e
+       h_p = xhat_p(2);
+       C_p = [0, 1, 0, 0, 0, 0, 0];
+       L_p = P_p*C_p'/(R_p(2,2) + C_p*P_p*C_p');
+       P_p = (eye(7) - L_p*C_p)*P_p;
+       xhat_p = xhat_p + L_p*(y_gps_e - h_p);
+       
+       % gps Vg
+       h_p = xhat_p(3);
+       C_p = [0, 0, 1, 0, 0, 0, 0];
+       L_p = P_p*C_p'/(R_p(3,3) + C_p*P_p*C_p');
+       P_p = (eye(7) - L_p*C_p)*P_p;
+       xhat_p = xhat_p + L_p*(y_gps_Vg - h_p);
+       
+       % gps X
+       % Wrap Gps course
+       while (y_gps_course)>pi, y_gps_course = y_gps_course - 2*pi; end
+       while (y_gps_course)<-pi, y_gps_course = y_gps_course + 2*pi; end
+       h_p = xhat_p(4);
+       C_p = [0, 0, 0, 1, 0, 0, 0];
+       L_p = P_p*C_p'/(R_p(4,4) + C_p*P_p*C_p');
+       P_p = (eye(7) - L_p*C_p)*P_p;
+       xhat_p = xhat_p + L_p*(y_gps_course - h_p);
+       
+       % Pseudo Measurements
+       % Pseudo Measurements
+       % Wind north
+       h_p = Vahat*cos(psi) + wn - Vg*cos(chi);
+       C_p = [0, 0, -cos(chi), Vg*sin(chi), 1, 0, -Vahat*sin(psi)];
+       L_p = P_p*C_p'/(R_p(5, 5) + C_p*P_p*C_p');
+       P_p = (eye(7) - L_p*C_p)*P_p;
+       xhat_p = xhat_p + L_p*(0 - h_p); % assume measurement of 0
+       
+       % Wind east
+       h_p = Vahat*sin(psi) + we - Vg*sin(chi);
+       C_p = [0, 0, -sin(chi), -Vg*cos(chi), 0, 1, Vahat*cos(psi)];
+       L_p = P_p*C_p'/(R_p(6,6) + C_p*P_p*C_p');
+       P_p = (eye(7) - L_p*C_p)*P_p;
+       xhat_p = xhat_p + L_p*(0 - h_p); % assume measurement of 0
+       
+   % update persistents
+       gps_n_old = y_gps_n
+       gps_e_old = y_gps_e
+       gps_Vg_old = y_gps_Vg
+       gps_x_old = y_gps_course
+   end
+   
+  % update estimates
+   pnhat = xhat_p(1);
+   pehat = xhat_p(2);
+   Vghat = xhat_p(3);
+   chihat = xhat_p(4);
+   wnhat = xhat_p(5);
+   wehat = xhat_p(6);
+   psihat = xhat_p(7);
        
     % not estimating these states 
     alphahat = 0;
@@ -192,20 +344,6 @@ function xhat = estimate_states(uu, P)
     bxhat    = 0;
     byhat    = 0;
     bzhat    = 0;
-    
-    pnhat    = 0;  
-    pehat    = 0; 
-    hhat     = 0; 
-    Vahat     = 0;
-    chihat     = 0;
-    phat     = 0;
-    qhat     = 0;
-    rhat     = 0;
-    Vghat     = 0;
-    wnhat     = 0;
-    wehat     = 0;
-    psihat     = 0;
-     
     
       xhat = [...
         pnhat;...   
