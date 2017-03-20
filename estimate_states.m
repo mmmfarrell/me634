@@ -82,19 +82,19 @@ function xhat = estimate_states(uu, P)
    rhat = lpf_gyro_z;
    
    %%% LPF Altitude from Static Pres %%%
-   lpf_static_pres = P.lpf_alpha*lpf_static_pres + (1 - P.lpf_alpha)*y_static_pres;
+   lpf_static_pres = P.lpf_alpha1*lpf_static_pres + (1 - P.lpf_alpha1)*y_static_pres;
    hhat = lpf_static_pres/P.rho/P.gravity;
    
    %%% LPF Air Speed from diff Pres %%%
-   lpf_diff_pres = P.lpf_alpha*lpf_diff_pres + (1 - P.lpf_alpha)*y_diff_pres;
+   lpf_diff_pres = P.lpf_alpha1*lpf_diff_pres + (1 - P.lpf_alpha1)*y_diff_pres;
    Vahat = sqrt(2*lpf_diff_pres/P.rho);
    
    %%% LPF Roll, Pitch from Accel %%%
    lpf_accel_x = P.lpf_alpha*lpf_accel_x + (1 - P.lpf_alpha)*y_accel_x;
    lpf_accel_y = P.lpf_alpha*lpf_accel_y + (1 - P.lpf_alpha)*y_accel_y;
    lpf_accel_z = P.lpf_alpha*lpf_accel_z + (1 - P.lpf_alpha)*y_accel_z;
-   phihat = atan(lpf_accel_y/lpf_accel_z);
-   thetahat = asin(lpf_accel_x/P.gravity);
+   phihat_accel = atan(lpf_accel_y/lpf_accel_z);
+   thetahat_accel = asin(lpf_accel_x/P.gravity);
    
    
    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -105,6 +105,7 @@ function xhat = estimate_states(uu, P)
    % Attitude Estimation %
    %%%%%%%%%%%%%%%%%%%%%%%
    
+   % Tested and seems to work great!
    persistent xhat_a 
    persistent y_accel_x_old
    persistent P_a
@@ -201,7 +202,8 @@ function xhat = estimate_states(uu, P)
    % Init persistent variables
    if t ==0
        xhat_p = [P.pn0; P.pe0; P.Va0; P.psi0; 0; 0; P.psi0];
-       P_p = diag([10^2, 10^2, 1^2, (10*pi/180)^2, 10^2, 10^2, (5*pi/180)^2]);
+%        P_p = diag([10^2, 10^2, 1^2, (10*pi/180)^2, 10^2, 10^2, (5*pi/180)^2]);
+       P_p = diag([0.03, 0.03, 0.1^2, (5*pi/180), 0.2^2, 0.22^2, (5*pi/180)]);
        gps_n_old = -9999;
        gps_e_old = -9999;
        gps_Vg_old = -9999;
@@ -210,7 +212,7 @@ function xhat = estimate_states(uu, P)
    
    % Matricies
    Q_p = diag([0.0001, 0.0001, 0.0001, 0.000001, 0.0001, 0.0001, 0.0001]);
-   R_p = diag([P.gps_sigma_n^2, P.gps_sigma_e^2, P.gps_sigma_Vg^2, P.gps_sigma_x, 0.001, 0.001]);
+   R_p = diag([P.gps_sigma_n^2, P.gps_sigma_e^2, P.gps_sigma_Vg^2, P.gps_sigma_x^2, 0.001, 0.001]);
    
    %%%% Prediction %%%%
    N = 10; % Prediction steps
@@ -323,10 +325,10 @@ function xhat = estimate_states(uu, P)
        xhat_p = xhat_p + L_p*(0 - h_p); % assume measurement of 0
        
    % update persistents
-       gps_n_old = y_gps_n
-       gps_e_old = y_gps_e
-       gps_Vg_old = y_gps_Vg
-       gps_x_old = y_gps_course
+       gps_n_old = y_gps_n;
+       gps_e_old = y_gps_e;
+       gps_Vg_old = y_gps_Vg;
+       gps_x_old = y_gps_course;
    end
    
   % update estimates

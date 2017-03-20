@@ -197,5 +197,7 @@ P.gps_sigma_x = P.gps_sigma_Vg/P.Va0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % LPF Params
-P.lpf_a = 20; % Cutoff freq for lpf
+P.lpf_a = 50; % Cutoff freq for lpf
 P.lpf_alpha = exp(-P.lpf_a*P.Ts);
+P.lpf_a1 = 1.5; % Cutoff freq for lpf
+P.lpf_alpha1 = exp(-P.lpf_a1*P.Ts);
