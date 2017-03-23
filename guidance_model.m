@@ -132,9 +132,10 @@ function sys=mdlDerivatives(t,x,u,P)
   
     % Tuning gains
     b_chidot = 1.0;
-    b_chi = 1.0;
+    b_chi = 0.75;
     b_va = 1.0;
-    b_h = 1.0;
+    b_h = 2.0;
+    b_hdot = 1.1;
     
     pndot = Va*cos(psi) + wn;
     pedot = Va*sin(psi) + we;
@@ -193,13 +194,14 @@ function sys=mdlOutputs(t,x,u,P)
   
   % solve for heading and groundspeed
   psi = chi - asin( (-P.wind_n*sin(chi)+P.wind_e*cos(chi))/Va );
-  Vg  = [cos(chi), sin(chi)]*(Va*[cos(psi); sin(psi)] + [wn; we]); 
+  Vg  = [cos(chi), sin(chi)]*(Va*[cos(psi); sin(psi)] + [wn; we]);
   
   % roll angle is given by psidot = g/V*tan(phi)
   phi     = atan(Vg*chidot/P.gravity);
   
   % letting theta equal flight path angle given by hdot = V sin(gamma)
-  theta = asin(hdot/Va);
+%   theta = asin(hdot/Va);
+theta = 0;
     
   % set angular rates to zero
   p     = 0;
