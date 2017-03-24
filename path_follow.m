@@ -70,18 +70,26 @@ function out = path_follow(in,P)
           % Compute error
           e_py = -sin(chi_q)*(pn-r_path(1)) + cos(chi_q)*(pe-r_path(2));
           
-          chi_c = -Chi_inf*(2/pi)*atan(k_path*e_py);
+          chi_c = chi_q-P.Chi_inf*(2/pi)*atan(P.k_path*e_py);
           
-          % H_c  
-          h_c = ;
+          % H_c
+          p_vec = [pn; pe; -h];
+          e_i_p = p_vec - r_path;
+          k = [0; 0; 1];
+          temp = cross(q_path,k);
+          n = temp/norm(temp);
+          
+          s = e_i_p - (dot(e_i_p,n))*n;
+          
+          h_c = -r_path(3) + sqrt(s(1)^2 + s(2)^2)*(q_path(3)/sqrt(q_path(1)^2 + q_path(2)^2));
           
           % Phi feedforward
-          phi_ff = ;
+          phi_ff = 0;
            
       case 2, % follow orbit specified by c, rho, lam
           
           % Chi_c
-          d = sqrt((pn-c_orbit(1))^2 + (pe-c_orbit(2)^2);
+          d = sqrt((pn-c_orbit(1))^2 + (pe-c_orbit(2))^2);
           phibar = atan2((pe-c_orbit(2)),(pn-c_orbit(1)));
           while (phibar-chi)<-pi
               phibar = phibar + 2*pi;
@@ -90,13 +98,13 @@ function out = path_follow(in,P)
               phibar = phibar - 2*pi;
           end
           
-          chi_c = phibar + lam_orbit*((pi/2) + atan(k_orbit*(d-rho_orbit)/rho_orbit));
+          chi_c = phibar + lam_orbit*((pi/2) + atan(P.k_orbit*(d-rho_orbit)/rho_orbit));
           
           % H_c
           h_c = -c_orbit(3);
           
           % Phi_feedforward
-          phi_ff = ;
+          phi_ff = atan(Va^2/(P.gravity*rho_orbit));
   end
   
   % command airspeed equal to desired airspeed

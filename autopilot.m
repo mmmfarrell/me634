@@ -33,6 +33,7 @@ function y = autopilot(uu,P)
     Va_c     = uu(1+NN);  % commanded airspeed (m/s)
     h_c      = uu(2+NN);  % commanded altitude (m)
     chi_c    = uu(3+NN);  % commanded course (rad)
+    phi_ff   = uu(4+NN);
     NN = NN+3;
     t        = uu(1+NN);   % time
     
@@ -46,7 +47,7 @@ function y = autopilot(uu,P)
         case 2,
            [delta, x_command] = autopilot_uavbook(Va_c,h_c,chi_c,Va,h,chi,phi,theta,p,q,r,t,P);
         case 3,
-           [delta, x_command] = autopilot_TECS(Va_c,h_c,chi_c,Va,h,chi,phi,theta,p,q,r,t,P);
+           [delta, x_command] = autopilot_TECS(Va_c,h_c,chi_c,phi_ff,Va,h,chi,phi,theta,p,q,r,t,P);
     end
     y = [delta; x_command];
 end
@@ -240,17 +241,17 @@ function [delta, x_command] = autopilot_uavbook(Va_c,h_c,chi_c,Va,h,chi,phi,thet
 % autopilot_TECS
 %   - longitudinal autopilot based on total energy control systems
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [delta, x_command] = autopilot_TECS(Va_c,h_c,chi_c,Va,h,chi,phi,theta,p,q,r,t,P)
+function [delta, x_command] = autopilot_TECS(Va_c,h_c,chi_c,phi_ff,Va,h,chi,phi,theta,p,q,r,t,P)
 
     %----------------------------------------------------------
     % lateral autopilot
     if t==0,
         % assume no rudder, therefore set delta_r=0
         delta_r = 0;%coordinated_turn_hold(beta, 1, P);
-        phi_c   = course_hold(chi_c, chi, r, 1, P);
+        phi_c   = course_hold(chi_c, chi, r, 1, P,phi_ff);
 
     else
-        phi_c   = course_hold(chi_c, chi, r, 0, P);
+        phi_c   = course_hold(chi_c, chi, r, 0, P, phi_ff);
         delta_r = 0;%coordinated_turn_hold(beta, 0, P);
     end
     delta_a = roll_hold(phi_c, phi, p, P);     
@@ -328,7 +329,7 @@ end
 % phi_c from chi_c
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function phi_c = course_hold(chi_c, chi, r, init, P)
+function phi_c = course_hold(chi_c, chi, r, init, P, phi_ff)
     % Pg. 99
     % PI Control
     persistent integrator;
@@ -352,7 +353,7 @@ function phi_c = course_hold(chi_c, chi, r, init, P)
     ui = P.course_ki * integrator;
     
     % PI Control
-    phi_c_unsat = up + ui;
+    phi_c_unsat = up + ui+phi_ff;
     phi_c = sat(phi_c_unsat, 45*pi/180, -45*pi/180);
     
     % Anti-windup
