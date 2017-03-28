@@ -34,7 +34,7 @@ function y = autopilot(uu,P)
     h_c      = uu(2+NN);  % commanded altitude (m)
     chi_c    = uu(3+NN);  % commanded course (rad)
     phi_ff   = uu(4+NN);
-    NN = NN+3;
+    NN = NN+4;
     t        = uu(1+NN);   % time
     
     autopilot_version = 3;
@@ -354,6 +354,7 @@ function phi_c = course_hold(chi_c, chi, r, init, P, phi_ff)
     
     % PI Control
     phi_c_unsat = up + ui+phi_ff;
+    
     phi_c = sat(phi_c_unsat, 45*pi/180, -45*pi/180);
     
     % Anti-windup

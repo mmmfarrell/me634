@@ -104,8 +104,8 @@ function out = path_follow(in,P)
           h_c = -c_orbit(3);
           
           % Phi_feedforward
-%           phi_ff = atan(Va^2/(P.gravity*rho_orbit));
-          phi_ff = 0;
+          phi_ff = atan(Va^2/(P.gravity*rho_orbit));
+%           phi_ff = 0;
   end
   
   % command airspeed equal to desired airspeed
