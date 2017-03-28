@@ -89,8 +89,8 @@ P.AR = (P.b^2)/P.S_wing;
 %%%%%%%
 
 % wind parameters
-P.wind_n = 0;%3;
-P.wind_e = 0;%2;
+P.wind_n = 3;%3;
+P.wind_e = 2;%2;
 P.wind_d = 0;
 P.L_u = 200;
 P.L_v = 200;
@@ -169,10 +169,10 @@ P.bias_gyro_z = 0;
 P.sigma_accel = 0.0025*P.gravity; % m/s/s Appendix H.2 for ADXL325
 
 P.sigma_abs_press = 0.01*1000; % Pa Appendix H.3
-P.beta_abs_press = 0.125*1000; % Pa Appendix H.3
+P.beta_abs_press = 0;%0.125*1000; % Pa Appendix H.3
 
 P.sigma_diff_press = 0.002 * 1000; % Pa Appendix H.3
-P.beta_diff_press = 0.020*1000; % Pa Appendix H.3
+P.beta_diff_press = 0;%0.020*1000; % Pa Appendix H.3
 
 P.mag_inclination = 65.7 * pi/180; % rad Pg. 132
 P.mag_declination = 12.12 * pi/180; % rad Pg. 131
