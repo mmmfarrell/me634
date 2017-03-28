@@ -300,8 +300,8 @@ function xhat = estimate_states(uu, P)
        
        % gps X
        % Wrap Gps course
-       while (y_gps_course)>pi, y_gps_course = y_gps_course - 2*pi; end
-       while (y_gps_course)<-pi, y_gps_course = y_gps_course + 2*pi; end
+       while (y_gps_course-xhat_p(4))>pi, y_gps_course = y_gps_course - 2*pi; end
+       while (y_gps_course-xhat_p(4))<-pi, y_gps_course = y_gps_course + 2*pi; end
        h_p = xhat_p(4);
        C_p = [0, 0, 0, 1, 0, 0, 0];
        L_p = P_p*C_p'/(R_p(4,4) + C_p*P_p*C_p');

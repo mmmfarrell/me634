@@ -216,6 +216,6 @@ P.gamma_max = 45*pi/180;
 %%%%%% Path Follow Gains %%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-P.Chi_inf = 60*pi/180;
+P.Chi_inf = 70*pi/180;
 P.k_path = 0.010;
 P.k_orbit = 2.5;
