@@ -33,16 +33,15 @@ function dubinspath = dubinsParameters(start_node, end_node, R)
       dubinspath = [];
   else
     
-    ps   = ;
-    chis = ;
-    pe   = ;
-    chie = ;
-    
-
-    crs = ;
-    cls = ;
-    cre = ;
-    cle = ;
+    ps   = start_node(1:3);
+    chis = start_node(4);
+    pe   = end_node(1:3);
+    chie = end_node(4);
+   
+    crs = ps + R * [cos(chis+pi/2), sin(chis+pi/2), 0]';
+    cls = ps + R * [cos(chis-pi/2), sin(chis-pi/2), 0]';
+    cre = pe + R * [cos(chie+pi/2), sin(chie+pi/2), 0]';
+    cle = pe + R * [cos(chie-pi/2), sin(chie-pi/2), 0]';
     
    
     % compute L1

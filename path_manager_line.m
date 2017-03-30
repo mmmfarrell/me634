@@ -49,7 +49,6 @@ function out = path_manager_line(in,P,start_of_simulation)
   NN = NN + 16;
   t         = in(1+NN);
  
-  
   p = [pn; pe; -h];
 
   persistent waypoints_old   % stored copy of old waypoints
@@ -101,9 +100,11 @@ function out = path_manager_line(in,P,start_of_simulation)
   
   n = q_minus + q_i;
   n= n/norm(n);
+
+%   half_plane = ((p - w_')'*n >= 0);
   
-  half_plane = ((p - w_)'*n >= 0);
-  
+  half_plane = (dot((p - w_'),n) >= 0);
+
   if half_plane
       if ptr_a ==num_waypoints
           ptr_a = 1;
@@ -111,8 +112,9 @@ function out = path_manager_line(in,P,start_of_simulation)
         ptr_a = ptr_a + 1;
       end
   end 
-  
-  out = [flag; Va_d; r; q_minus; c; rho; lambda; state; flag_need_new_waypoints];
+            disp('Path Manager Line')
+
+  out = [flag; Va_d; r'; q_minus'; c'; rho; lambda; state; flag_need_new_waypoints];
 
   % determine if next waypoint path has been reached, and rotate ptrs if
   % necessary

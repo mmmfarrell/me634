@@ -85,36 +85,64 @@ function out = path_manager_fillet(in,P,start_of_simulation)
       ptr_c = ptr_b+1;
   end
   
- w_minus = [waypoints(1,ptr_a), waypoints(2,ptr_a), waypoints(3,ptr_a)];
- w_ = [waypoints(1,ptr_b), waypoints(2,ptr_b), waypoints(3,ptr_b)];
- w_plus = [waypoints(1,ptr_c), waypoints(2,ptr_c), waypoints(3,ptr_c)];
+ w_minus = [waypoints(1,ptr_a); waypoints(2,ptr_a); waypoints(3,ptr_a)];
+ w_ = [waypoints(1,ptr_b); waypoints(2,ptr_b); waypoints(3,ptr_b)];
+ w_plus = [waypoints(1,ptr_c); waypoints(2,ptr_c); waypoints(3,ptr_c)];
   
+ qim1 = w_ - w_minus;
+ qim1 = qim1/norm(qim1);
+ 
+ qi = w_plus - w_;
+ qi = qi/norm(qi);
+ 
+ varrho = acos(-qim1'*qi);
+ 
   % define transition state machine
   switch state_transition,
       case 1, % follow straight line from wpp_a to wpp_b
           flag   = 1;  % following straight line path
-          Va_d   = ; % desired airspeed along waypoint path
-          r      = ;
-          q      = ;
+          Va_d   = waypoints(5, ptr_a); % desired airspeed along waypoint path
+          r      = w_minus;
+          q      = qim1;
           q      = q/norm(q);
-          c      = [-999, -999, -999]; % doesn't matter
+          c      = [-999; -999; -999]; % doesn't matter
           rho    = -999; % doesn't matter
           lambda = -999; % doesn't matter
           
+          z = w_ - (P.R_min/tan(varrho/2))*qim1;
+          
+          half_plane = (dot((p - z),qim1) >= 0);
+
+          if half_plane
+              state_transition = 2;
+          end 
              
       case 2, % follow orbit from wpp_a-wpp_b to wpp_b-wpp_c
           flag   = 2;  % following orbit
-          Va_d   = ; % desired airspeed along waypoint path
-          r      = ;
-          q      = ;
-          q      = q/norm(q);
-          q_next = ;
-          q_next = q_next/norm(q_next);
-          beta   = ;
-          c      = ;
-          rho    = ;
-          lambda = ;
+          Va_d   = waypoints(5, ptr_a); % desired airspeed along waypoint path
+          r      = [-999; -999; -999];
+          q      = [-999; -999; -999];
+%           q      = q/norm(q);
+%           q_next = ;
+%           q_next = q_next/norm(q_next);
+%           beta   = ;
+
+          c      = w_ + (P.R_min/sin(varrho/2))*((qim1 - qi)/norm(qim1 - qi));
+          rho    = P.R_min;
+          lambda = sign(qim1(1)*qi(2) - qim1(2)*qi(1));
           
+          z = w_ - (P.R_min/tan(varrho/2))*qi;
+          
+          half_plane = (dot((p - z),qi) >= 0);
+          
+          if half_plane
+              if ptr_a ==num_waypoints
+                  ptr_a = 1;
+              else
+                ptr_a = ptr_a + 1;
+              end
+              state_transition = 1;
+          end
 
   end
   
