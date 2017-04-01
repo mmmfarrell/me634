@@ -81,6 +81,7 @@ function out = path_manager(in,P)
         start_of_simulation=0;
     else
         out = path_manager_dubins(in,P,start_of_simulation); % follows Dubins paths between waypoint configurations
+%         out = path_manager_fillet(in,P,start_of_simulation);  % smooths through waypoints with fillets
         start_of_simulation=0;
     end
   end
