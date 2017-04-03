@@ -112,7 +112,7 @@ function out = path_manager_line(in,P,start_of_simulation)
         ptr_a = ptr_a + 1;
       end
   end 
-            disp('Path Manager Line')
+%             disp('Path Manager Line')
 
   out = [flag; Va_d; r'; q_minus'; c'; rho; lambda; state; flag_need_new_waypoints];
 

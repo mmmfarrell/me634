@@ -138,7 +138,7 @@ P.x_trim = x_trim;
 % initial conditions
 P.pn0    = 0;  % initial North position
 P.pe0    = 0;  % initial East position
-P.pd0    = 0;  % initial Down position (negative altitude)
+P.pd0    = -200;  % initial Down position (negative altitude)
 P.u0     = x_trim(4);  % initial velocity along body x-axis
 P.v0     = x_trim(5);  % initial velocity along body y-axis
 P.w0     = x_trim(6);  % initial velocity along body z-axis
