@@ -9,7 +9,7 @@
 function path_out=planRRTDubins(wpp_start, wpp_end, R_min, map)
 
     % standard length of path segments
-    segmentLength = 2*R_min;
+    segmentLength = 5*R_min;
 
     % desired down position is down position of end node
     pd = wpp_end(3);
@@ -25,19 +25,20 @@ function path_out=planRRTDubins(wpp_start, wpp_end, R_min, map)
     
     % check to see if start_node connects directly to end_node
     if ( (norm(start_node(1:3)-end_node(1:3))<segmentLength )...
-            &(collision(start_node,end_node,map)==0) )
+            &&(collision(start_node,end_node,map)==0) )
         path = [start_node; end_node];
     else
         numPaths = 0;
-        while numPaths<3,
-            [tree,flag] = extendTree(tree,end_node,segmentLength,map,pd,chi);
+        while (numPaths < 3) 
+            [tree,flag] = extendTree(tree,end_node,segmentLength,map,pd,chi,R_min);
             numPaths = numPaths + flag;
         end
+        % Find path w/ min cost to end_node
+        path = findMinimumPath(tree,end_node);
     end
 
     % find path with minimum cost to end_node
-    path = findMinimumPath(tree,end_node);
-    path_out = smoothPath(path,map);
+    path_out = smoothPath(path,map,R_min);
     plotmap(map,path,path_out,tree);
 
 end
@@ -60,11 +61,18 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% collision
 %%   check to see if a node is in collsion with obstacles
-function collision_flag = collision(start_node, end_node, map)
+function collision_flag = collision(start_node, end_node, map, R_min)
 
     collision_flag = 0;
     
-    [X,Y,Z] = pointsAlongPath(start_node, end_node, 0.1);
+    % Find dubins path from start to end
+    dubinsPath = dubinsParameters(start_node, end_node, R_min);
+    if isempty(dubinsPath)
+        collision_flag = 1;
+        return;
+    end
+    
+    [X,Y,Z] = pointsAlongPath(dubinsPath, 0.1);
 
     for i = 1:length(X),
         if Z(i) >= downAtNE(map, X(i), Y(i)),
@@ -78,23 +86,46 @@ end
 %% pointsAlongPath
 %%   Find points along straight-line path separted by Del (to be used in
 %%   collision detection)
-function [X,Y,Z] = pointsAlongPath(start_node, end_node, Del)
+function [X,Y,Z] = pointsAlongPath(dubinsPath, Del)
+vec_angle = @(s,e) atan2(e(2)-s(2),e(1)-s(1));
 
-    X = [start_node(1)];
-    Y = [start_node(2)];
-    Z = [start_node(3)];
+% First Circle
+theta1 = vec_angle(dubinsPath.cs, dubinsPath.ps);
+theta2 = vec_angle(dubinsPath.cs, dubinsPath.w1);
+[X1, Y1] = circlepoints(dubinsPath.cs, dubinsPath.R, theta1, theta2, dubinsPath.lams);
+Z1 = ones(size(X1))*dubinsPath.ps(3);
+
+% Line
+start_node = dubinsPath.w1;
+X2 = start_node(1);
+Y2 = start_node(2);
+Z2 = start_node(3);
+
+end_node = dubinsPath.w2;
     
-    q = [end_node(1:3)-start_node(1:3)];
-    L = norm(q);
-    q = q/L;
+q = end_node(1:3)-start_node(1:3);
+L = norm(q);
+q = q/L;
     
-    w = start_node(1:3);
-    for i=2:floor(L/Del),
-        w = w + Del*q;
-        X = [X, w(1)];
-        Y = [Y, w(2)];
-        Z = [Z, w(3)];
-    end
+w = start_node(1:3);
+for i=2:floor(L/Del),
+    w = w + Del*q;
+    X2 = [X2; w(1)];
+    Y2 = [Y2; w(2)];
+    Z2 = [Z2; w(3)];
+end
+
+% End Circle
+theta1 = vec_angle(dubinsPath.ce, dubinsPath.w2);
+theta2 = vec_angle(dubinsPath.ce, dubinsPath.w3);
+[X3, Y3] = circlepoints(dubinsPath.ce, dubinsPath.R, theta1, theta2, dubinsPath.lame);
+Z3 = ones(size(X3))*dubinsPath.ps(3);
+% disp('Here')
+X = [X1;X2;X3];
+% disp('Here2')
+Y = [Y1;Y2;Y3];
+Z = [Z1;Z2;Z3];
+
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -117,7 +148,7 @@ end
 %% extendTree
 %%   extend tree by randomly selecting point and growing tree toward that
 %%   point
-function [new_tree,flag] = extendTree(tree,end_node,segmentLength,map,pd,chi)
+function [new_tree,flag] = extendTree(tree,end_node,segmentLength,map,pd,chi,R_min)
 
   flag1 = 0;
   while flag1==0,
@@ -127,14 +158,16 @@ function [new_tree,flag] = extendTree(tree,end_node,segmentLength,map,pd,chi)
     % find leaf on node that is closest to randomPoint
     tmp = tree(:,1:3)-ones(size(tree,1),1)*randomNode(1:3);
     [dist,idx] = min(diag(tmp*tmp'));
-%     L = min(sqrt(dist), segmentLength); MEEEEE
-    L = segmentLength;
+    L = min(sqrt(dist), segmentLength); 
+    L = max(3.25*R_min, L);
     cost     = tree(idx,5) + L;
     tmp = randomNode(1:3)-tree(idx,1:3);
     new_point = tree(idx,1:3)+L*(tmp/norm(tmp));
+    
+    chi = mod(atan2(new_point(2),new_point(1)),2*pi);
     new_node = [new_point, chi, cost, idx, 0]; 
 
-    if collision(tree(idx,:), new_node, map)==0,
+    if collision(tree(idx,:), new_node, map, R_min)==0
       new_tree = [tree; new_node];
       flag1=1;
     end
@@ -142,7 +175,7 @@ function [new_tree,flag] = extendTree(tree,end_node,segmentLength,map,pd,chi)
   
   % check to see if new node connects directly to end_node
   if ( (norm(new_node(1:3)-end_node(1:3))<segmentLength )...
-      &&(collision(new_node,end_node,map)==0) )
+      &&(collision(new_node,end_node,map, R_min)==0) )
     flag = 1;
     new_tree(end,7)=1;  % mark node as connecting to end.
   else
@@ -181,12 +214,12 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% smoothPath
 %%   smooth the waypoint path 
-function newPath = smoothPath(path,map)
+function newPath = smoothPath(path,map,R_min)
 
     newPath = path(1,:); % add the start node 
     ptr =2;  % pointer into the path
     while ptr <= size(path,1)-1,
-        if collision(newPath(end,:), path(ptr+1,:), map)~=0, % if there is a collision
+        if collision(newPath(end,:), path(ptr+1,:), map, R_min)~=0, % if there is a collision
             newPath = [newPath; path(ptr,:)];  % add previous node
         end
         ptr=ptr+1;
@@ -201,7 +234,7 @@ end
 function plotmap(map,path,smoothedPath,tree)
   
     % setup plot
-    figure(3), clf
+    figure(5), clf
     axis([0,map.width,0,map.width,0,2*map.MaxHeight]);
     xlabel('E')
     ylabel('N')
@@ -292,4 +325,15 @@ function [V,F,patchcolors] = buildingVertFace(n,e,width,height)
 
 end
 
+% Function to find points along a circle
+function [X,Y] = circlepoints(c,R,theta1,theta2,lamda)
+    angle = 2*pi*(lamda==-1)+lamda*mod(theta2-theta1,2*pi);
+
+    dtheta = 1*pi/180;
+    N = angle/dtheta;
+
+    angles = theta1+lamda*linspace(0,angle,N)';
+    X = cos(angles)*R+c(1);
+    Y = sin(angles)*R+c(2);
+end
     

@@ -34,7 +34,10 @@ function out = path_planner(in,P,map)
   persistent wpp
   
 
-  if (t==0) || flag_new_waypoints,
+  if (t==0) || flag_new_waypoints
+      if flag_new_waypoints
+          disp('Requesting new waypoints');
+      end
     % format for each point is [pn, pe, pd, chi, Va^d] where the position
     % of the waypoint is (pn, pe, pd), the desired course at the waypoint
     % is chi, and the desired airspeed between waypoints is Va
@@ -58,12 +61,12 @@ function out = path_planner(in,P,map)
                   ];
           case 3,  % path through city using Dubin's paths
                % current configuration
-              wpp_start = [pn, pe, -h, chi, P.Va0];
+              wpp_start = [pn, pe, -100, chi, P.Va0];
               % desired end waypoint
               if norm([pn; pe; -h]-[map.width; map.width; -h])<map.width/2,
-                  wpp_end = [0, 0, -h, 0, P.Va0];
+                  wpp_end = [0, 0, -100, chi, P.Va0];
               else
-                  wpp_end = [map.width, map.width, P.pd0, 0, P.Va0];
+                  wpp_end = [map.width, map.width, -100, 0, P.Va0];
               end
               waypoints = planRRTDubins(wpp_start, wpp_end, P.R_min, map);
               num_waypoints = size(waypoints,1);
